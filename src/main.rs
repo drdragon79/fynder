@@ -1,13 +1,20 @@
-use std::collections::HashMap;
-use std::env;
-use std::fs;
-use std::io;
-use std::io::BufRead;
-use std::path::Path;
-use std::process::exit;
+use std::{
+    collections::HashMap,
+    fs,
+    io::{self, BufRead},
+    path::Path
+};
+use clap::Parser;
 
+#[derive(Parser)]
+#[command(version)]
 struct CliOptions {
+    /// Directory path
+    #[arg(long, short)]
     dir_path: String,
+
+    /// Pattern
+    #[arg(long, short)]
     pattern: String,
 }
 
@@ -64,7 +71,7 @@ impl Search {
 }
 
 fn main() {
-    let options = parse_cli_args();
+    let options = CliOptions::parse();
     println!("INFO: Directory Path: {}", options.dir_path);
     let mut files = Vec::new();
     get_dir_items(
@@ -80,35 +87,7 @@ fn main() {
     Search::display(Search::normal(&searcher));
 }
 
-fn parse_cli_args() -> CliOptions {
-    let mut options = CliOptions {
-        dir_path: String::new(),
-        pattern: String::new(),
-    };
-    let args: Vec<String> = env::args().collect();
-    for i in 0..args.len() {
-        let t = &args[i];
-        match t.as_str() {
-            "-d" => {
-                let path = String::from(&args[i + 1]);
-                if Path::new(path.as_str()).is_dir() {
-                    options.dir_path = path;
-                } else {
-                    println!("ERROR: {}: Invaild directory.", path);
-                    exit(1)
-                }
-            }
-            "-p" => {
-                let p = String::from(&args[i + 1]);
-                options.pattern = p;
-            }
-            _ => continue,
-        }
-    }
-    options
-}
-
-fn get_dir_items(dir: &Path, files: &mut Vec<String>) -> Result<(), std::io::Error> {
+fn get_dir_items(dir: &Path, files: &mut Vec<String>) -> std::io::Result<()> {
     if dir.is_dir() {
         for item in fs::read_dir(dir)? {
             let item = item?;
